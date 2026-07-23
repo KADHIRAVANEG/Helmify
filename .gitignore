@@ -1,0 +1,13 @@
+# Go
+/bin/
+/dist/
+*.test
+*.out
+
+# Generated charts (examples output)
+examples/*/output/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
