@@ -1,0 +1,6 @@
+helmify generated this chart for "manifests".
+
+Workloads deployed:
+  - Deployment/web
+
+Run "kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}" to check status.
