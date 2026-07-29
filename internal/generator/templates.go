@@ -67,7 +67,7 @@ metadata:
   labels:
     {{ "{{-" }} include "{{ .Project.Name }}.labels" . | nindent 4 {{ "}}" }}
 spec:
-  replicas: {{ "{{" }} .Values.{{ .Workload.Name }}.replicaCount {{ "}}" }}
+  replicas: {{ "{{" }} index .Values "{{ .Workload.Name }}" "replicaCount" {{ "}}" }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Workload.Name }}
@@ -88,8 +88,8 @@ spec:
 {{- end }}
       containers:
         - name: {{ .Workload.Container.Name | default .Workload.Name }}
-          image: "{{ "{{" }} .Values.{{ .Workload.Name }}.image.repository {{ "}}" }}:{{ "{{" }} .Values.{{ .Workload.Name }}.image.tag {{ "}}" }}"
-          imagePullPolicy: {{ "{{" }} .Values.{{ .Workload.Name }}.image.pullPolicy {{ "}}" }}
+          image: "{{ "{{" }} $img := index .Values "{{ .Workload.Name }}" "image" {{ "}}" }}{{ "{{" }} $img.repository {{ "}}" }}:{{ "{{" }} $img.tag {{ "}}" }}"
+          imagePullPolicy: {{ "{{" }} (index .Values "{{ .Workload.Name }}" "image").pullPolicy {{ "}}" }}
 {{- if .Secure }}
           securityContext:
             allowPrivilegeEscalation: false
@@ -111,11 +111,11 @@ spec:
 {{ end }}{{- end }}
           resources:
             requests:
-              cpu: {{ "{{" }} .Values.{{ .Workload.Name }}.resources.requests.cpu {{ "}}" }}
-              memory: {{ "{{" }} .Values.{{ .Workload.Name }}.resources.requests.memory {{ "}}" }}
+              cpu: {{ "{{" }} (index .Values "{{ .Workload.Name }}" "resources" "requests" "cpu") {{ "}}" }}
+              memory: {{ "{{" }} (index .Values "{{ .Workload.Name }}" "resources" "requests" "memory") {{ "}}" }}
             limits:
-              cpu: {{ "{{" }} .Values.{{ .Workload.Name }}.resources.limits.cpu {{ "}}" }}
-              memory: {{ "{{" }} .Values.{{ .Workload.Name }}.resources.limits.memory {{ "}}" }}
+              cpu: {{ "{{" }} (index .Values "{{ .Workload.Name }}" "resources" "limits" "cpu") {{ "}}" }}
+              memory: {{ "{{" }} (index .Values "{{ .Workload.Name }}" "resources" "limits" "memory") {{ "}}" }}
 `
 
 const networkPolicyTemplate = `apiVersion: networking.k8s.io/v1

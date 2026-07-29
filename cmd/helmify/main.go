@@ -12,6 +12,7 @@ import (
 	"github.com/KADHIRAVANEG/helmify/internal/generator"
 	"github.com/KADHIRAVANEG/helmify/internal/model"
 	composeparser "github.com/KADHIRAVANEG/helmify/internal/parser/compose"
+	dockerfileparser "github.com/KADHIRAVANEG/helmify/internal/parser/dockerfile"
 	yamlparser "github.com/KADHIRAVANEG/helmify/internal/parser/yaml"
 )
 
@@ -68,9 +69,6 @@ func runGenerate(args []string) error {
 		}
 	case isComposeFile(*input):
 		if *name == "" {
-			// compose files are usually named docker-compose.yml, so the
-			// filename itself isn't a good default chart name - fall back
-			// to the parent directory name instead.
 			abs, _ := filepath.Abs(*input)
 			chartName = filepath.Base(filepath.Dir(abs))
 		}
@@ -78,8 +76,17 @@ func runGenerate(args []string) error {
 		if err != nil {
 			return fmt.Errorf("parsing docker-compose input: %w", err)
 		}
+	case isDockerfile(*input):
+		if *name == "" {
+			abs, _ := filepath.Abs(*input)
+			chartName = filepath.Base(filepath.Dir(abs))
+		}
+		proj, err = dockerfileparser.Parse(*input, chartName)
+		if err != nil {
+			return fmt.Errorf("parsing Dockerfile input: %w", err)
+		}
 	default:
-		return fmt.Errorf("--input must be a directory of YAML manifests or a docker-compose.yml file (Dockerfile-only support coming in v0.3)")
+		return fmt.Errorf("--input must be a directory of YAML manifests, a docker-compose.yml file, or a Dockerfile")
 	}
 
 	if err := generator.Generate(proj, generator.Options{
@@ -111,6 +118,11 @@ func isComposeFile(path string) bool {
 	return false
 }
 
+func isDockerfile(path string) bool {
+	base := strings.ToLower(filepath.Base(path))
+	return base == "dockerfile" || strings.HasPrefix(base, "dockerfile.")
+}
+
 func printUsage() {
 	fmt.Println(`helmify - generate Helm charts from existing project artifacts
 
@@ -125,5 +137,7 @@ Flags:
 
 Examples:
   helmify generate --input ./manifests --output ./chart
-  helmify generate --input ./manifests --output ./chart --secure`)
+  helmify generate --input ./manifests --output ./chart --secure
+  helmify generate --input docker-compose.yml --output ./chart
+  helmify generate --input Dockerfile --name my-app --output ./chart`)
 }
