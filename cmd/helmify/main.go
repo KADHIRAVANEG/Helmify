@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/KADHIRAVANEG/helmify/internal/generator"
+	"github.com/KADHIRAVANEG/helmify/internal/model"
+	composeparser "github.com/KADHIRAVANEG/helmify/internal/parser/compose"
 	yamlparser "github.com/KADHIRAVANEG/helmify/internal/parser/yaml"
 )
 
@@ -50,18 +52,34 @@ func runGenerate(args []string) error {
 	if err != nil {
 		return fmt.Errorf("reading --input: %w", err)
 	}
-	if !info.IsDir() {
-		return fmt.Errorf("v0.1 only supports a directory of YAML manifests as --input (compose/Dockerfile support coming in v0.2/v0.3)")
-	}
 
 	chartName := *name
 	if chartName == "" {
 		chartName = filepath.Base(strings.TrimRight(*input, "/"))
 	}
 
-	proj, err := yamlparser.Parse(*input, chartName)
-	if err != nil {
-		return fmt.Errorf("parsing YAML input: %w", err)
+	var proj *model.Project
+
+	switch {
+	case info.IsDir():
+		proj, err = yamlparser.Parse(*input, chartName)
+		if err != nil {
+			return fmt.Errorf("parsing YAML input: %w", err)
+		}
+	case isComposeFile(*input):
+		if *name == "" {
+			// compose files are usually named docker-compose.yml, so the
+			// filename itself isn't a good default chart name - fall back
+			// to the parent directory name instead.
+			abs, _ := filepath.Abs(*input)
+			chartName = filepath.Base(filepath.Dir(abs))
+		}
+		proj, err = composeparser.Parse(*input, chartName)
+		if err != nil {
+			return fmt.Errorf("parsing docker-compose input: %w", err)
+		}
+	default:
+		return fmt.Errorf("--input must be a directory of YAML manifests or a docker-compose.yml file (Dockerfile-only support coming in v0.3)")
 	}
 
 	if err := generator.Generate(proj, generator.Options{
@@ -80,6 +98,17 @@ func runGenerate(args []string) error {
 		len(proj.Workloads), len(proj.Services), len(proj.ConfigMaps), len(proj.Ingresses))
 	fmt.Printf("  next: helm lint %s\n", *output)
 	return nil
+}
+
+// isComposeFile does a lightweight filename check rather than trying to
+// sniff content - compose files are conventionally named one of these.
+func isComposeFile(path string) bool {
+	base := strings.ToLower(filepath.Base(path))
+	switch base {
+	case "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml":
+		return true
+	}
+	return false
 }
 
 func printUsage() {
