@@ -1,6 +1,6 @@
 # helmify
 
-**helmify** is a CLI tool that generates production-ready Helm charts from existing project artifacts — raw Kubernetes YAML manifests, `docker-compose.yml` files, or even a bare `Dockerfile`. An optional `--secure` mode layers in CIS-aligned security hardening defaults (non-root contexts, default-deny NetworkPolicies, resource limits, and image signature verification hooks).
+**helmify** is a **CLI** tool that generates production-ready Helm charts from existing project artifacts — raw Kubernetes YAML manifests, `docker-compose.yml` files, or even a bare `Dockerfile`. An optional `--secure` mode layers in CIS-aligned security hardening defaults (non-root contexts, default-deny NetworkPolicies, resource limits, and image signature verification hooks).
 
 > Turn what you already have into a Helm chart you'd actually ship.
 
