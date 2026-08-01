@@ -45,6 +45,9 @@ func Generate(proj *model.Project, opts Options) error {
 	if err := writeFile(filepath.Join(opts.OutputDir, "templates", "NOTES.txt"), notesTemplate, proj); err != nil {
 		return err
 	}
+	if err := writeFile(filepath.Join(opts.OutputDir, "README.md"), chartReadmeTemplate, proj); err != nil {
+		return err
+	}
 
 	for _, w := range proj.Workloads {
 		fname := fmt.Sprintf("%s-%s.yaml", strings.ToLower(w.Kind), sanitize(w.Name))
