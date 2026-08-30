@@ -71,12 +71,20 @@ type Ingress struct {
 	Class string
 }
 
+// CronJob represents a scheduled Kubernetes batch job.
+type CronJob struct {
+	Name      string
+	Schedule  string
+	Container Container
+}
+
 // Project is the full intermediate model for one input source.
 // Every parser (yaml/compose/dockerfile) builds one of these; the
 // generator only ever reads from a Project.
 type Project struct {
 	Name       string
 	Workloads  []Workload
+	CronJobs   []CronJob
 	Services   []Service
 	ConfigMaps []ConfigMap
 	Ingresses  []Ingress

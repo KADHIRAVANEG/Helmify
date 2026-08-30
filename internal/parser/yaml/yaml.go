@@ -52,8 +52,8 @@ func Parse(inputDir string, projectName string) (*model.Project, error) {
 		}
 	}
 
-	if len(proj.Workloads) == 0 {
-		return nil, fmt.Errorf("no Deployment/StatefulSet resources found in %s", inputDir)
+	if len(proj.Workloads) == 0 && len(proj.CronJobs) == 0 {
+		return nil, fmt.Errorf("no Deployment/StatefulSet/DaemonSet/CronJob resources found in %s", inputDir)
 	}
 
 	return proj, nil
@@ -85,7 +85,7 @@ func parseFile(path string, proj *model.Project) error {
 
 func applyDoc(doc rawDoc, proj *model.Project) {
 	switch doc.Kind {
-	case "Deployment", "StatefulSet":
+	case "Deployment", "StatefulSet", "DaemonSet":
 		proj.Workloads = append(proj.Workloads, workloadFromRaw(doc))
 	case "Service":
 		proj.Services = append(proj.Services, serviceFromRaw(doc))
@@ -96,7 +96,33 @@ func applyDoc(doc rawDoc, proj *model.Project) {
 		})
 	case "Ingress":
 		proj.Ingresses = append(proj.Ingresses, ingressFromRaw(doc))
+	case "CronJob":
+		proj.CronJobs = append(proj.CronJobs, cronJobFromRaw(doc))
 	}
+}
+
+func cronJobFromRaw(doc rawDoc) model.CronJob {
+	cj := model.CronJob{
+		Name:     doc.Metadata.Name,
+		Schedule: "* * * * *",
+	}
+
+	if sched, ok := doc.Spec["schedule"].(string); ok {
+		cj.Schedule = sched
+	}
+
+	jobTmpl, _ := doc.Spec["jobTemplate"].(map[string]any)
+	jobSpec, _ := jobTmpl["spec"].(map[string]any)
+	podTmpl, _ := jobSpec["template"].(map[string]any)
+	podSpec, _ := podTmpl["spec"].(map[string]any)
+	containers, _ := podSpec["containers"].([]any)
+
+	if len(containers) > 0 {
+		c, _ := containers[0].(map[string]any)
+		cj.Container = containerFromRaw(c)
+	}
+
+	return cj
 }
 
 func workloadFromRaw(doc rawDoc) model.Workload {

@@ -16,6 +16,14 @@ import (
 type Options struct {
 	OutputDir string
 	Secure    bool // when true, the hardening package is applied before writing
+	ArgoCD    bool // when true, generates ArgoCD Application manifest
+	Flux      bool // when true, generates Flux HelmRelease manifest
+	RBAC      bool // when true, generates ServiceAccount, Role, RoleBinding
+}
+
+type valuesView struct {
+	Project *model.Project
+	Options Options
 }
 
 // Generate writes a complete Helm chart for proj into opts.OutputDir.
@@ -33,7 +41,7 @@ func Generate(proj *model.Project, opts Options) error {
 	if err := writeFile(filepath.Join(opts.OutputDir, "Chart.yaml"), chartYAMLTemplate, proj); err != nil {
 		return err
 	}
-	if err := writeFile(filepath.Join(opts.OutputDir, "values.yaml"), valuesYAMLTemplate, proj); err != nil {
+	if err := writeFile(filepath.Join(opts.OutputDir, "values.yaml"), valuesYAMLTemplate, valuesView{Project: proj, Options: opts}); err != nil {
 		return err
 	}
 	if err := writeFile(filepath.Join(opts.OutputDir, ".helmignore"), helmignoreTemplate, proj); err != nil {
@@ -49,6 +57,29 @@ func Generate(proj *model.Project, opts Options) error {
 		return err
 	}
 
+	if opts.ArgoCD {
+		if err := writeFile(filepath.Join(opts.OutputDir, "argocd-application.yaml"), argocdApplicationTemplate, proj); err != nil {
+			return err
+		}
+	}
+	if opts.Flux {
+		if err := writeFile(filepath.Join(opts.OutputDir, "flux-helmrelease.yaml"), fluxHelmReleaseTemplate, proj); err != nil {
+			return err
+		}
+	}
+
+	if opts.RBAC {
+		if err := writeFile(filepath.Join(opts.OutputDir, "templates", "serviceaccount.yaml"), serviceAccountTemplate, proj); err != nil {
+			return err
+		}
+		if err := writeFile(filepath.Join(opts.OutputDir, "templates", "role.yaml"), roleTemplate, proj); err != nil {
+			return err
+		}
+		if err := writeFile(filepath.Join(opts.OutputDir, "templates", "rolebinding.yaml"), roleBindingTemplate, proj); err != nil {
+			return err
+		}
+	}
+
 	for _, w := range proj.Workloads {
 		fname := fmt.Sprintf("%s-%s.yaml", strings.ToLower(w.Kind), sanitize(w.Name))
 		if err := writeFile(filepath.Join(opts.OutputDir, "templates", fname), workloadTemplate, workloadView{Project: proj, Workload: w, Secure: opts.Secure}); err != nil {
@@ -59,6 +90,13 @@ func Generate(proj *model.Project, opts Options) error {
 			if err := writeFile(filepath.Join(opts.OutputDir, "templates", npFile), networkPolicyTemplate, workloadView{Project: proj, Workload: w, Secure: opts.Secure}); err != nil {
 				return err
 			}
+		}
+	}
+
+	for _, cj := range proj.CronJobs {
+		fname := fmt.Sprintf("cronjob-%s.yaml", sanitize(cj.Name))
+		if err := writeFile(filepath.Join(opts.OutputDir, "templates", fname), cronJobTemplate, cronJobView{Project: proj, CronJob: cj, Secure: opts.Secure}); err != nil {
+			return err
 		}
 	}
 
@@ -90,6 +128,12 @@ type workloadView struct {
 	Project  *model.Project
 	Workload model.Workload
 	Secure   bool
+}
+
+type cronJobView struct {
+	Project *model.Project
+	CronJob model.CronJob
+	Secure  bool
 }
 
 type serviceView struct {
