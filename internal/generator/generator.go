@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/JOKER-53/Helmify/internal/model"
+	"github.com/KADHIRAVANEG/helmify/internal/model"
 )
 
 // Options controls how the chart is generated.

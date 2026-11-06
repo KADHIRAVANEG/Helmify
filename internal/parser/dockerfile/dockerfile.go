@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/JOKER-53/Helmify/internal/model"
+	"github.com/KADHIRAVANEG/helmify/internal/model"
 )
 
 // Parse reads a single Dockerfile at path and builds a Project named

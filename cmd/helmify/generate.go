@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/JOKER-53/Helmify/internal/generator"
-	"github.com/JOKER-53/Helmify/internal/model"
-	composeparser "github.com/JOKER-53/Helmify/internal/parser/compose"
-	dockerfileparser "github.com/JOKER-53/Helmify/internal/parser/dockerfile"
-	yamlparser "github.com/JOKER-53/Helmify/internal/parser/yaml"
+	"github.com/KADHIRAVANEG/helmify/internal/generator"
+	"github.com/KADHIRAVANEG/helmify/internal/model"
+	composeparser "github.com/KADHIRAVANEG/helmify/internal/parser/compose"
+	dockerfileparser "github.com/KADHIRAVANEG/helmify/internal/parser/dockerfile"
+	yamlparser "github.com/KADHIRAVANEG/helmify/internal/parser/yaml"
 	"github.com/spf13/cobra"
 )
 

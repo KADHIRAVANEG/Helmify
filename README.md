@@ -26,7 +26,7 @@ Most teams have Kubernetes manifests, a compose file, or just a Dockerfile lying
 ## Install
 
 ```bash
-git clone https://github.com/JOKER-53/helmify.git
+git clone https://github.com/KADHIRAVANEG/helmify.git
 cd helmify
 make build
 ./bin/helmify --help
